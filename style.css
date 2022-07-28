@@ -20,7 +20,7 @@ input[type=button][disabled]{
 }
 
 div#PlurkList{
-    max-height: 80%;
+    max-height: 70%;
     display: inline-block;
     overflow-y: scroll;
     padding: 4px;
@@ -44,7 +44,7 @@ div.PlurkDiv>div{
 }
 
 div#Progress{
-    height: 30px;
+    height: 40px;
     /*background: #0d0;*/
     background: linear-gradient(to right, #0d0 0% , #999 0%);
     border: 1px solid #00f;
