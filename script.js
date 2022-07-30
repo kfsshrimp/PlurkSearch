@@ -1,28 +1,753 @@
-var $jscomp=$jscomp||{};$jscomp.scope={};$jscomp.createTemplateTagFirstArg=function(a){return a.raw=a};$jscomp.createTemplateTagFirstArgWithRaw=function(a,b){a.raw=b;return a};$jscomp.arrayIteratorImpl=function(a){var b=0;return function(){return b<a.length?{done:!1,value:a[b++]}:{done:!0}}};$jscomp.arrayIterator=function(a){return{next:$jscomp.arrayIteratorImpl(a)}};$jscomp.makeIterator=function(a){var b="undefined"!=typeof Symbol&&Symbol.iterator&&a[Symbol.iterator];return b?b.call(a):$jscomp.arrayIterator(a)};
-(function(){Ex={id:"PlurkSearch",config:{sort:{pos:"\u65e5\u671f",fav:"\u559c\u6b61\u6578",rep:"\u8f49\u5657\u6578"},porn:{all:"\u5168\u90e8","true":"\u6210\u4eba","false":"\u975e\u6210\u4eba"},loop_sec:2E3,loop_safe:100,page_per_count:20,max:100,XMLmax:1E4,msg:{search_end:function(a,b,c,d){return a+"~"+b+"\u671f\u9593\u641c\u5c0b\u5b8c\u6210,\u5171"+c+"\u5657<BR>(\u4eca\u65e5\u67e5\u8a62\u9918\u984d\uff1a"+d+")"},day_limit:function(a){return"\u5e33\u865f\u3010"+a+"\u3011\u4eca\u65e5\u5df2\u9054\u67e5\u8a62\u4e0a\u9650,\u8acb\u660e\u65e5\u518d\u4f7f\u67e5\u8a62"},
-Progress:function(a,b){return"\u641c\u5c0b\u4e2d\uff1a"+a+"% ("+b+")"},nick_name_err:"\u5e33\u865f\u8f38\u5165\u6709\u8aa4",xml:"\u7cfb\u7d71\u4eca\u65e5\u5df2\u9054\u67e5\u8a62\u4e0a\u9650,\u8acb\u660e\u65e5\u518d\u67e5\u8a62",time_range_err:"\u958b\u59cb\u6642\u9593\u4e0d\u53ef\u5927\u65bc\u7d50\u679c\u6642\u9593"}},flag:{page:1,local:{},session:{}},temp:{Plurk:function(a){var b=document.createElement("div");b.innerHTML='\n                <div class="PlurkDiv">\n                    <div>\n                        '+
-a.content+"\n                        <hr>\n\n                        <div>\n                        \u3010"+a.no+"\u3011"+Ex.func.PlurkDate(a.posted)+' / \u559c\u6b61\uff1a<span class="fav">'+a.favorite_count+'</span> / \u8f49\u5657\uff1a<span class="rep">'+a.replurkers_count+'</span> / <a href="https://www.plurk.com/p/'+parseInt(a.plurk_id).toString(36)+'" target="_blank">PLURK</a>\n\n                        </div>\n\n                    </div>\n                </div>';return b}},func:{Block:function(a){var b=
-document.createElement("div");document.body.prepend(b);b.innerHTML='<div style="\n                position: absolute;\n                height: 100px;\n                width: 100px;\n                top: calc(50% - 100px);\n                left: calc(50% - 100px);\n                border-radius: 50%;\n                border-top: 5px solid #aaa;"></div>';b.style="\n                    overflow:hidden;\n                    width: 100%;\n                    height: 100%;\n                    z-index: 99;\n                    background: #000;\n                    position: absolute;\n                    opacity:1;\n                    transition-duration: "+
-a+"s;\n                    cursor: wait;\n                ";var c=0,d=setInterval(function(){c++;b.querySelector("div").style.transform="rotate("+c+"deg)"},1);setTimeout(function(){b.style.opacity=0;setTimeout(function(){b.remove();clearInterval(d)},1E3*a)},1E3*a)},PageControl:function(){var a=Ex.PlurkApi.search_plurks.length;document.querySelectorAll('#PageBar [data-mode="PageChange"]').forEach(function(b){b.setAttribute("disabled","")});1*Ex.flag.page+1<=Math.ceil(a/Ex.config.page_per_count)&&document.querySelector('#PageBar [data-path="next"]').removeAttribute("disabled");
-0<(Ex.flag.page-1)*Ex.config.page_per_count&&document.querySelector('#PageBar [data-path="prev"]').removeAttribute("disabled");Ex.PlurkApi.plurks.length<=Ex.config.page_per_count&&document.querySelectorAll('#PageBar [data-mode="PageChange"]').forEach(function(b){b.setAttribute("disabled","")})},PlurkList:function(a){var b=document.querySelector("#PlurkList").innerHTML="",c="",d=document.querySelectorAll('select[data-mode="ymdchange"]'),g=document.querySelector('select[data-mode="sort"]'),k=document.querySelector('select[data-mode="porn"]');
-b=d[3].value+"/"+d[4].value+"/"+d[5].value;c=d[0].value+"/"+d[1].value+"/"+d[2].value;var f=[],m;for(m in a){var e=a[m];(new Date(e.posted)).getFullYear()<=parseInt(d[3].value)&&(new Date(e.posted)).getFullYear().toString()>=parseInt(d[0].value)&&(new Date(e.posted)).getMonth()+1<=parseInt(d[4].value)&&(new Date(e.posted)).getMonth()+1>=parseInt(d[1].value)&&(new Date(e.posted)).getDate()<=parseInt(d[5].value)&&(new Date(e.posted)).getDate()>=parseInt(d[2].value)&&(k.value===e.porn.toString()||"all"===
-k.value)&&f.push(e)}"fav"===g.value?f.sort(function(h,l){return l.favorite_count!==h.favorite_count?l.favorite_count-h.favorite_count:l.replurkers_count-h.replurkers_count}):"rep"===g.value&&f.sort(function(h,l){return l.replurkers_count!==h.replurkers_count?l.replurkers_count-h.replurkers_count:l.favorite_count-h.favorite_count});Ex.PlurkApi.search_plurks=f;for(m in f)a=f[m],a.no=1*m+1,(Ex.flag.page-1)*Ex.config.page_per_count>=a.no||Ex.flag.page*Ex.config.page_per_count<a.no||document.querySelector("#PlurkList").appendChild(Ex.temp.Plurk(a));
-document.querySelector("#Progress").innerHTML=Ex.config.msg.search_end(c,b,f.length,Ex.config.max-Ex.flag.NickNameCount);Ex.func.PageControl()},SelectYMD:function(a,b,c){for(var d="",g="",k="",f=(new Date).getFullYear()-10;f<=(new Date).getFullYear();f++)d+="<option "+(f===(new Date).getFullYear()?"selected":"")+">"+f+"</option>";for(f=1;12>=f;f++)g+="<option "+(f===(parseInt(b)||(new Date).getMonth()+1)?"selected":"")+">"+f.toString().padStart(2,"0")+"</option>";for(f=1;f<=(new Date(a||(new Date).getFullYear(),
-b||(new Date).getMonth()+1,0)).getDate();f++)k+="<option "+(f===(parseInt(c)||(new Date).getDate())?"selected":"")+">"+f.toString().padStart(2,"0")+"</option>";return{y:d,m:g,d:k}},SelectHtml:function(a,b){var c="",d;for(d in a)c+='<option value="'+d+'" '+(d===b?"selected":"")+">"+a[d]+"</option>";return c},ChangeEvent:function(a){if(void 0===a)document.querySelectorAll('[data-event="ChangeEvent"]').forEach(function(b){Ex.flag.ChangeEventRegister=Ex.flag.ChangeEventRegister||[];-1===Ex.flag.ChangeEventRegister.indexOf(b.id)&&
-(console.log("register ChangeEvent"),Ex.flag.ChangeEventRegister.push(b.id),b.addEventListener("change",Ex.func.ChangeEvent))});else switch(a.target.dataset.mode){case "ymdchange":a=document.querySelectorAll('[data-mode="ymdchange"][data-group="'+a.target.dataset.group+'"]');a[2].innerHTML=Ex.func.SelectYMD(a[0].value,a[1].value,1).d;break;case "sort":Ex.func.PlurkList(Ex.PlurkApi.plurks);break;case "porn":Ex.func.PlurkList(Ex.PlurkApi.plurks)}},ClickEvent:function(a){if(void 0===a)document.querySelectorAll('[data-event="ClickEvent"]').forEach(function(e){Ex.flag.ClickEventRegister=
-Ex.flag.ClickEventRegister||[];-1===Ex.flag.ClickEventRegister.indexOf(e.id)&&(console.log("register ClickEvent"),Ex.flag.ClickEventRegister.push(e.id),e.addEventListener("click",Ex.func.ClickEvent))});else switch(a.target.dataset.mode){case "Search":document.querySelector('[data-mode="Search"]').setAttribute("disabled","");var b=document.querySelector("#nick_name").value,c=Ex.PlurkApi;c.act="checkTime";c.func=function(e){e=JSON.parse(e.response);Ex.flag.PlurkTime=new Date(1E3*e.timestamp);Ex.flag.PlurkDay=
-Ex.flag.PlurkTime.getFullYear()+"-"+(Ex.flag.PlurkTime.getMonth()+1)+"-"+Ex.flag.PlurkTime.getDate()};c.Send();c.plurks=[];document.querySelector("#PlurkList").innerHTML="";Ex.flag.page=1;document.querySelector("#PageBar #page").value=Ex.flag.page;var d="",g="";a=document.querySelectorAll('select[data-mode="ymdchange"]');d=a[3].value+"/"+a[4].value+"/"+a[5].value;g=a[0].value+"/"+a[1].value+"/"+a[2].value;if(""===b){alert(Ex.config.msg.nick_name_err);document.querySelector('[data-mode="Search"]').removeAttribute("disabled");
-break}if(new Date(d)<new Date(g)){document.querySelector("#Progress").innerHTML=Ex.config.msg.time_range_err;document.querySelector('[data-mode="Search"]').removeAttribute("disabled");break}c.act="Timeline/getPublicPlurks";c.arg.minimal_data="true";c.arg.minimal_user="true";c.arg.nick_name=document.querySelector("#nick_name").value;c.arg.limit="100";c.arg.only_user="true";c.mode="CORS";d=(new Date(d)).setHours(32);g=(new Date(g)).setHours(8);c.arg.offset=(new Date(d)).toISOString();var k=0;c.func=
-function(e){c.plurks=c.plurks||[];try{e=JSON.parse(e.response)}catch(n){console.log(g);Ex.func.PlurkList(Ex.PlurkApi.plurks);document.querySelector("#Progress").style.background="linear-gradient(to right, #0d0 100% , #999 0%)";document.querySelector('[data-mode="Search"]').removeAttribute("disabled");return}if(0===e.plurks.length)Ex.func.PlurkList(Ex.PlurkApi.plurks),document.querySelector("#Progress").style.background="linear-gradient(to right, #0d0 100% , #999 0%)",document.querySelector('[data-mode="Search"]').removeAttribute("disabled");
-else if(c.plurks=c.plurks.concat(e.plurks),k++,k>Ex.config.loop_safe)console.log("loop_safe break");else{e=Math.floor((new Date(d)).getTime()/1E3/60/60/24);var h=Math.floor((new Date(g)).getTime()/1E3/60/60/24),l=Math.floor((new Date(c.plurks[c.plurks.length-1].posted)).getTime()/1E3/60/60/24);e=Math.floor((e-h-(l-h))/(e-h)*100);document.querySelector("#Progress").innerHTML=Ex.config.msg.Progress(e,(new Date(c.plurks[c.plurks.length-1].posted)).toISOString().split("T")[0]);document.querySelector("#Progress").style.background=
-"linear-gradient(to right, #0d0 "+e+"% , #999 0%)";(new Date(c.plurks[c.plurks.length-1].posted)).toISOString()>=(new Date(g)).toISOString()?setTimeout(function(){c.arg.offset=(new Date(new Date(c.plurks[c.plurks.length-1].posted))).toISOString();Ex.func.DB("PlurkSearch/nick_name/"+b+"/"+Ex.flag.PlurkDay,"add",function(n){n=n.val()||0;Ex.flag.NickNameCount=n;n>=Ex.config.max?(alert(Ex.config.msg.day_limit(b)),Ex.func.PlurkList(Ex.PlurkApi.plurks),document.querySelector('[data-mode="Search"]').removeAttribute("disabled")):
-Ex.func.DB("PlurkSearch/XmlCount/"+Ex.flag.PlurkDay,"add",function(p){p=p.val()||0;p>=Ex.config.XMLmax?(alert(Ex.config.msg.xml),Ex.func.PlurkList(Ex.PlurkApi.plurks),document.querySelector('[data-mode="Search"]').removeAttribute("disabled")):c.Send()})})},Ex.config.loop_sec):(Ex.func.PlurkList(Ex.PlurkApi.plurks),document.querySelector('[data-mode="Search"]').removeAttribute("disabled"))}};Ex.func.DB("PlurkSearch/nick_name/"+b+"/"+Ex.flag.PlurkDay,"add",function(e){e=e.val()||0;Ex.flag.NickNameCount=
-e;e>=Ex.config.max?(alert(Ex.config.msg.day_limit(b)),Ex.func.PlurkList(Ex.PlurkApi.plurks),document.querySelector('[data-mode="Search"]').removeAttribute("disabled")):(Ex.func.DB("PlurkSearch/SearchCount/"+Ex.flag.PlurkDay,"add"),Ex.func.DB("PlurkSearch/XmlCount/"+Ex.flag.PlurkDay,"add",function(h){h=h.val()||0;h>=Ex.config.XMLmax?(alert(Ex.config.msg.xml),Ex.func.PlurkList(Ex.PlurkApi.plurks),document.querySelector('[data-mode="Search"]').removeAttribute("disabled")):c.Send()}))});break;case "PageChange":a=
-a.target.dataset.path;var f=Ex.PlurkApi.search_plurks.length,m=parseInt(Ex.flag.page);"next"===a?Ex.flag.page=m+1:"prev"===a&&(Ex.flag.page=m-1);Ex.flag.page>Math.ceil(f/Ex.config.page_per_count)||0>=Ex.flag.page*Ex.config.page_per_count||(document.querySelector("#PageBar #page").value=Ex.flag.page,document.querySelector("#PlurkList").scrollTo(0,0),Ex.func.PlurkList(Ex.PlurkApi.plurks),Ex.func.PageControl())}},DB:function(a,b,c){switch(b){case "add":Ex.DB.ref(a).once("value",function(d){d=d.val()||
-0;Ex.DB.ref(a).set(parseInt(d)+1)}).then(function(d){"function"===typeof c&&c(d)})}},StorageUpd:function(){localStorage[Ex.id]=JSON.stringify(Ex.flag.local);sessionStorage[Ex.id]=JSON.stringify(Ex.flag.session)},PlurkDate:function(a){return(new Date(a)).getFullYear()+"-"+((new Date(a)).getMonth()+1)+"-"+(new Date(a)).getDate()+" "+(new Date(a)).getHours().toString().padStart(2,"0")+":"+(new Date(a)).getMinutes().toString().padStart(2,"0")+":"+(new Date(a)).getSeconds().toString().padStart(2,"0")}},
-ele:{},DB:{},firebase:function(a,b){if("undefined"===typeof firebase){var c=document.createElement("script");c.src="https://www.gstatic.com/firebasejs/5.5.6/firebase.js";document.head.appendChild(c);var d=setInterval(function(){"undefined"!==typeof firebase&&(Ex.DB=firebase,Ex.DB.initializeApp({databaseURL:a}),Ex.DB=Ex.DB.database(),clearInterval(d),"function"===typeof b&&b())},100)}},js:function(a){var b={},c;for(c in a)b.$jscomp$loop$prop$i$3=c,setTimeout(function(g){return function(){var k=document.createElement("script");
-k.src=a[g.$jscomp$loop$prop$i$3]+"?s="+(new Date).getTime();document.head.appendChild(k)}}(b),200*b.$jscomp$loop$prop$i$3),b={$jscomp$loop$prop$i$3:b.$jscomp$loop$prop$i$3};var d=setInterval(function(){"function"===typeof PlurkApi&&(Ex.PlurkApi=new PlurkApi,clearInterval(d))},100)},css:function(a){a=$jscomp.makeIterator(a);for(var b=a.next();!b.done;b=a.next()){b=b.value;var c=document.createElement("link");c.href=b+"?s="+(new Date).getTime();c.rel="stylesheet";c.type="text/css";document.head.appendChild(c)}},
-init:function(){Ex.firebase("https://kfs-plurk-default-rtdb.firebaseio.com/");Ex.js(["https://kfsshrimp.github.io/sha1/core-min.js","https://kfsshrimp.github.io/sha1/sha1-min.js","https://kfsshrimp.github.io/sha1/hmac-min.js","https://kfsshrimp.github.io/sha1/enc-base64-min.js","https://kfsshrimp.github.io/plurk/api.js"]);Ex.css(["style.css"]);Ex.flag.local=JSON.parse(localStorage[Ex.id]||"{}");Ex.flag.session=JSON.parse(sessionStorage[Ex.id]||"{}");Ex.func.StorageUpd();document.body.innerHTML='\n            <div id="SearchBar">\n            <input id="nick_name" value="" type="text" placeholder="\u5657\u6d6a\u5e33\u865f">\n\n            <select id="y_start" data-group="ymd_start" data-mode="ymdchange" data-event="ChangeEvent">'+
-Ex.func.SelectYMD().y+'</select>\n            <select id="m_start" data-group="ymd_start" data-mode="ymdchange" data-event="ChangeEvent">'+Ex.func.SelectYMD().m+'</select>\n            <select id="d_start" data-group="ymd_start" data-mode="ymdchange">'+Ex.func.SelectYMD().d+'</select>\n            ~\n            <select id="y_end" data-group="ymd_end" data-mode="ymdchange" data-event="ChangeEvent">'+Ex.func.SelectYMD().y+'</select>\n            <select id="m_end" data-group="ymd_end" data-mode="ymdchange" data-event="ChangeEvent">'+
-Ex.func.SelectYMD().m+'</select>\n            <select id="d_end" data-group="ymd_end" data-mode="ymdchange">'+Ex.func.SelectYMD().d+'</select>\n\n            <select id="sort" data-mode="sort" data-event="ChangeEvent">'+Ex.func.SelectHtml(Ex.config.sort)+'</select>\n            <select id="porn" data-mode="porn" data-event="ChangeEvent">'+Ex.func.SelectHtml(Ex.config.porn)+'</select>\n\n            <input data-event="ClickEvent" data-mode="Search" type="button" value="\u641c\u5c0b">\n\n            </div>\n\n            <div id="Progress"></div>\n\n            <div id="PlurkList"></div>\n\n            <div id="PageBar">\n            <input id="prev"\n            data-event="ClickEvent"\n            data-mode="PageChange"\n            data-path="prev" disabled\n            type="button" value="\u4e0a\u4e00\u9801">\n\n            <input id="page" type="button" value="1">\n\n            <input id="next"\n            data-event="ClickEvent"\n            data-mode="PageChange"\n            data-path="next" disabled\n            type="button" value="\u4e0b\u4e00\u9801">\n            </div>';
-Ex.func.ChangeEvent();Ex.func.ClickEvent();Ex.func.Block(1)}};window.onload=function(){Ex.init()}})();
+(()=>{
+    Ex = {
+        id:"PlurkSearch",
+        config:{
+            sort:{
+                "posted":"日期",
+                "favorite_count":"喜歡數",
+                "replurkers_count":"轉噗數",
+                "response_count":"回噗數"
+            },
+            porn:{
+                "all":"全部",
+                "true":"成人",
+                "false":"非成人"
+            },
+            loop_sec:2000,
+            loop_safe:100,
+            page_per_count:20,
+            max:100,
+            XMLmax:100 * 100,
+            msg:{
+                search_end:(end,start,length,last)=>{
+                    return `${end}~${start}期間搜尋完成,共${length}噗<BR>(今日查詢餘額：${last})`
+                },
+                day_limit:(nick_name)=>{
+                    return `帳號【${nick_name}】今日已達查詢上限,請明日再使查詢`
+                },
+                Progress:(number,day)=>{
+                    return `搜尋中：${number}%(${day})`;
+                },
+                nick_name_err:`帳號輸入有誤`,
+                xml:`系統今日已達查詢上限,請明日再查詢`,
+                time_range_err:`開始時間不可大於結果時間`,
+                time_range_err2:`搜尋範圍不可大於31天`
+            }
+        },
+        flag:{
+            page:1,
+            local:{},
+            session:{}
+        },
+        temp:{
+            Plurk:(data)=>{
+
+                var div = document.createElement("div");
+
+                div.innerHTML = `
+                <div class="PlurkDiv">
+                    <div>
+                        ${data.content}
+                        <hr>
+
+                        <div>
+                        【${data.no}】${Ex.func.PlurkDate(data.posted)} / 喜歡：<span class="fav">${data.favorite_count}</span> / 轉噗：<span class="rep">${data.replurkers_count}</span> / 回噗：<span class="rep">${data.response_count}</span> / <a href="https://www.plurk.com/p/${parseInt(data.plurk_id).toString(36)}" target="_blank">PLURK</a>
+
+                        </div>
+
+                    </div>
+                </div>`;
+
+                return div;
+            }
+        },
+        func:{
+            Block:(sec)=>{
+
+                var div = document.createElement("div");
+                document.body.prepend(div);
+
+                div.innerHTML = 
+                `<div style="
+                position: absolute;
+                height: 100px;
+                width: 100px;
+                top: calc(50% - 100px);
+                left: calc(50% - 100px);
+                border-radius: 50%;
+                border-top: 5px solid #aaa;"></div>`;
+
+                div.style = `
+                    overflow:hidden;
+                    width: 100%;
+                    height: 100%;
+                    z-index: 99;
+                    background: #000;
+                    position: absolute;
+                    opacity:1;
+                    transition-duration: ${sec}s;
+                    cursor: wait;
+                `;
+
+                var r = 0;
+                var _t = setInterval(()=>{
+                    r++;
+                    div.querySelector("div").style.transform = `rotate(${r}deg)`;
+                    
+                },1);
+                
+                setTimeout(()=>{
+                    div.style.opacity = 0;
+                    
+                    setTimeout(()=>{ div.remove();clearInterval(_t); },sec * 1000);
+
+                },sec * 1000);
+                
+
+            },
+            PageControl:()=>{
+
+                var total = Ex.PlurkApi.search_plurks.length;
+
+                document.querySelectorAll(`#PageBar [data-mode="PageChange"]`).forEach(o=>{
+                    o.setAttribute("disabled","");
+                });
+
+                if( (Ex.flag.page*1+1)<=Math.ceil(total/Ex.config.page_per_count) )
+                {
+                    document.querySelector(`#PageBar [data-path="next"]`).removeAttribute("disabled");
+                }
+
+                if( (Ex.flag.page-1)*Ex.config.page_per_count>0)
+                {
+                    document.querySelector(`#PageBar [data-path="prev"]`).removeAttribute("disabled");
+                }
+
+                if(Ex.PlurkApi.plurks.length<=Ex.config.page_per_count)
+                {
+                    document.querySelectorAll(`#PageBar [data-mode="PageChange"]`).forEach(o=>{
+                        o.setAttribute("disabled","");
+                    });
+                }
+
+            },
+            PlurkList:(plurks)=>{
+
+                document.querySelector("#PlurkList").innerHTML = ``;
+                
+                var start = ``,end = ``,
+                ymd = document.querySelectorAll(`select[data-mode="ymdchange"]`),
+                sort = document.querySelector(`select[data-mode="sort"]`),
+                porn = document.querySelector(`select[data-mode="porn"]`);
+
+                start = `${ymd[3].value}/${ymd[4].value}/${ymd[5].value}`;
+                end = `${ymd[0].value}/${ymd[1].value}/${ymd[2].value}`;
+
+                var search_plurks = [];
+
+                
+                for(var i in plurks)
+                {
+                    let data = plurks[i];
+
+                    
+                    if( 
+                        (
+                            new Date(data.posted).getFullYear()<=parseInt(ymd[3].value) && 
+                            new Date(data.posted).getFullYear().toString()>=parseInt(ymd[0].value)
+                        )
+                        &&
+                        (
+                            (new Date(data.posted).getMonth()+1)<=parseInt(ymd[4].value) && 
+                            (new Date(data.posted).getMonth()+1)>=parseInt(ymd[1].value)
+                        )
+                        &&
+                        (
+                            new Date(data.posted).getDate()<=parseInt(ymd[5].value) && 
+                            new Date(data.posted).getDate()>=parseInt(ymd[2].value)
+                        )
+                        &&
+                        (
+                            porn.value===data.porn.toString() || 
+                            porn.value==="all"
+                        )
+                    )
+                    {
+                        search_plurks.push(data);
+                    }
+                }
+
+
+                console.log(search_plurks);
+
+                /*
+                if(sort.value==="favorite_count")
+                    search_plurks.sort( (a,b)=>{return (b.favorite_count!==a.favorite_count)?b.favorite_count - a.favorite_count:b.replurkers_count - a.replurkers_count});
+                else if(sort.value==="replurkers_count")
+                    search_plurks.sort( (a,b)=>{return (b.replurkers_count!==a.replurkers_count)?b.replurkers_count - a.replurkers_count:b.favorite_count - a.favorite_count});
+                */
+
+
+                search_plurks.sort( (a,b)=>{return b[sort.value] - a[sort.value]});
+
+
+
+
+                Ex.PlurkApi.search_plurks = search_plurks;
+
+                for(var i in search_plurks)
+                {
+                    let data = search_plurks[i];
+
+                    data.no = i*1+1;
+
+
+                    if( (Ex.flag.page-1)*Ex.config.page_per_count>=data.no || Ex.flag.page*Ex.config.page_per_count<data.no ) continue;
+
+                    document.querySelector("#PlurkList").appendChild(
+
+                        Ex.temp.Plurk(data)
+
+                    );
+                }
+                
+
+                document.querySelector("#Progress").innerHTML = Ex.config.msg.search_end(end,start,search_plurks.length,Ex.config.max-Ex.flag.NickNameCount);
+
+
+                Ex.func.PageControl();
+
+
+            },
+            SelectYMD:(y,m,d)=>{
+
+                var y_select = ``,m_select = ``,d_select = ``;
+
+                for(var i=new Date().getFullYear()-10;i<=new Date().getFullYear();i++)
+                    y_select += `<option ${(i===new Date().getFullYear())?"selected":""}>${i}</option>`;
+
+                for(var i=1;i<=12;i++)
+                    m_select += `<option ${(i===(parseInt(m)||new Date().getMonth()+1))?"selected":""}>${i.toString().padStart(2,'0')}</option>`;
+
+
+                for(var i=1;i<=new Date( y||new Date().getFullYear() , m||(new Date().getMonth()+1) ,0).getDate();i++)
+                    d_select += `<option ${(i===(parseInt(d)||new Date().getDate()))?"selected":""}>${i.toString().padStart(2,'0')}</option>`;
+
+                
+                return {y:y_select,m:m_select,d:d_select}
+            },
+            SelectHtml:(obj,val)=>{
+                var html = ``;
+                for(var v in obj)
+                    html += `<option value="${v}" ${(v===val)?"selected":""}>${obj[v]}</option>`
+
+                return html;
+            },
+            ChangeEvent:(e)=>{
+
+                if(e===undefined)
+                {
+                    document.querySelectorAll(`[data-event="ChangeEvent"]`).forEach(o=>{
+
+                        Ex.flag.ChangeEventRegister = Ex.flag.ChangeEventRegister||[];
+
+                        if(Ex.flag.ChangeEventRegister.indexOf(o.id)===-1)
+                        {
+                            //console.log('register ChangeEvent')
+                            Ex.flag.ChangeEventRegister.push(o.id);
+                            o.addEventListener("change",Ex.func.ChangeEvent);
+                        }
+                    });
+
+
+                    return;
+                }
+
+                switch (e.target.dataset.mode){
+
+                    case "ymdchange":
+                        var ymd = document.querySelectorAll(`[data-mode="ymdchange"][data-group="${e.target.dataset.group}"]`);
+
+
+                        ymd[2].innerHTML = Ex.func.SelectYMD( ymd[0].value,ymd[1].value,1 ).d;
+                    break;
+
+                    case "sort":
+
+                        Ex.func.PlurkList(Ex.PlurkApi.plurks);
+
+                    break;
+
+                    case "porn":
+
+                        Ex.func.PlurkList(Ex.PlurkApi.plurks);
+
+                    break;
+
+                }
+
+            },
+            ClickEvent:(e)=>{
+
+                if(e===undefined)
+                {
+                    document.querySelectorAll(`[data-event="ClickEvent"]`).forEach(o=>{
+
+                        Ex.flag.ClickEventRegister = Ex.flag.ClickEventRegister||[];
+
+                        if(Ex.flag.ClickEventRegister.indexOf(o.id)===-1)
+                        {
+                            //console.log('register ClickEvent')
+                            Ex.flag.ClickEventRegister.push(o.id);
+                            o.addEventListener("click",Ex.func.ClickEvent);
+                        }
+                    });
+
+
+                    return;
+                }
+
+                switch (e.target.dataset.mode){
+
+
+                    case "Search":
+                        
+                        document.querySelector(`[data-mode="Search"]`).setAttribute("disabled","");
+
+                        var nick_name = document.querySelector("#nick_name").value;
+
+                        var api = Ex.PlurkApi;
+
+                        api.act = "checkTime";
+                        api.func = (r)=>{
+                            r = JSON.parse(r.response);
+                            Ex.flag.PlurkTime = new Date(r.timestamp * 1000);
+                            Ex.flag.PlurkDay = `${Ex.flag.PlurkTime.getFullYear()}-${Ex.flag.PlurkTime.getMonth()+1}-${Ex.flag.PlurkTime.getDate()}`;
+                        }
+                        api.Send();
+
+                        
+
+
+                        api.plurks = [];
+                        document.querySelector("#PlurkList").innerHTML = ``;
+                        Ex.flag.page = 1;
+                        document.querySelector("#PageBar #page").value = Ex.flag.page;
+                        
+
+
+                        var start = ``,end = ``,ymd = document.querySelectorAll(`select[data-mode="ymdchange"]`);
+
+                        start = `${ymd[3].value}/${ymd[4].value}/${ymd[5].value}`;
+                        end = `${ymd[0].value}/${ymd[1].value}/${ymd[2].value}`;
+
+                        if(nick_name==='')
+                        {
+                            alert(Ex.config.msg.nick_name_err);
+                            document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
+                            return;
+                        }
+
+                        if( new Date(start)<new Date(end) )
+                        {
+                            alert(Ex.config.msg.time_range_err);
+                            document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
+                            return;
+                        }
+
+
+                        if( (((new Date(start) - new Date(end)) / 1000) / 60 / 60 / 24) >= 31 )
+                        {
+                            alert(Ex.config.msg.time_range_err2);
+                            document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
+                            return;
+                        }
+
+
+
+                        api.act = "Timeline/getPublicPlurks";
+                        api.arg.minimal_data = "true";
+                        api.arg.minimal_user = "true";
+                        api.arg.nick_name = document.querySelector("#nick_name").value;
+                        api.arg.limit = "100";
+                        api.arg.only_user = "true";
+                        api.mode = "CORS";
+
+                        start = new Date(start).setHours(24+8);
+                        end = new Date(end).setHours(8);
+
+
+
+                        api.arg.offset = new Date(start).toISOString();
+
+                        
+                        var safe = 0;
+                        api.func = (r)=>{ 
+
+
+                            api.plurks = api.plurks||[];
+    
+                            try{
+                                r = JSON.parse(r.response);
+                            }
+                            catch(err){
+                                console.log(end);
+                                
+                                Ex.func.PlurkList(Ex.PlurkApi.plurks);
+
+                                document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 100% , #999 0%)`;
+
+                                document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
+                                return;
+                            }
+    
+                            if(r.plurks.length===0)
+                            {
+                                Ex.func.PlurkList(Ex.PlurkApi.plurks);
+
+                                document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 100% , #999 0%)`;
+
+                                document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
+                                return;
+                            }
+    
+                        
+                            api.plurks = api.plurks.concat(r.plurks);
+                        
+
+                            safe++;
+                            if(safe>Ex.config.loop_safe){console.log('loop_safe break');return;}
+                            
+                            
+                            
+                            var s = Math.floor(new Date(start).getTime()/1000/60/60/24);
+                            var e = Math.floor(new Date(end).getTime()/1000/60/60/24);
+                            var p = Math.floor(new Date(api.plurks[api.plurks.length-1].posted).getTime()/1000/60/60/24);
+
+                            var progress = Math.floor( ( s - e - (p - e) ) / ( s - e ) * 100 );
+
+
+                            document.querySelector("#Progress").innerHTML = Ex.config.msg.Progress(
+                                progress,
+                                new Date(api.plurks[api.plurks.length-1].posted).toISOString().split("T")[0]
+                                );
+
+                            document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 ${progress}% , #999 0%)`;
+
+
+
+
+                            if(new Date(api.plurks[api.plurks.length-1].posted).toISOString() >= new Date(end).toISOString())
+                            {
+                                setTimeout(()=>{
+                                    
+                                    api.arg.offset = new Date( new Date(api.plurks[api.plurks.length-1].posted) ).toISOString();
+
+
+                                    Ex.func.DB(`PlurkSearch/nick_name/${nick_name}/${Ex.flag.PlurkDay}`,`add`,(r)=>{
+
+                                        r = r.val()||0;
+
+                                        Ex.flag.NickNameCount = r;
+
+                                        if(r>=Ex.config.max)
+                                        {
+                                            alert(Ex.config.msg.day_limit(nick_name));
+                                            Ex.func.PlurkList(Ex.PlurkApi.plurks);
+
+                                            document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
+                                            return;
+                                        }
+
+                                        Ex.func.DB(`PlurkSearch/XmlCount/${Ex.flag.PlurkDay}`,`add`,(r)=>{
+
+                                            r = r.val()||0;
+            
+                                            if(r>=Ex.config.XMLmax)
+                                            {
+                                                alert(Ex.config.msg.xml);
+                                                Ex.func.PlurkList(Ex.PlurkApi.plurks);
+            
+                                                document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
+                                                return;
+                                            }
+            
+            
+                                            api.Send();
+            
+                                        });
+            
+                                    });                               
+                        
+                                },Ex.config.loop_sec);
+                            }
+                            else
+                            {
+                                Ex.func.PlurkList(Ex.PlurkApi.plurks);
+                                
+                                document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
+                            }    
+                        }
+
+
+                        
+
+                        Ex.func.DB(`PlurkSearch/nick_name/${nick_name}/${Ex.flag.PlurkDay}`,`add`,(r)=>{
+
+                            r = r.val()||0;
+
+                            Ex.flag.NickNameCount = r;
+
+                            if(r>=Ex.config.max)
+                            {
+                                alert(Ex.config.msg.day_limit(nick_name));
+                                Ex.func.PlurkList(Ex.PlurkApi.plurks);
+
+                                document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
+                                return;
+                            }
+
+                            Ex.func.DB(`PlurkSearch/SearchCount/${Ex.flag.PlurkDay}`,`add`);
+
+                            Ex.func.DB(`PlurkSearch/XmlCount/${Ex.flag.PlurkDay}`,`add`,(r)=>{
+
+                                r = r.val()||0;
+
+                                if(r>=Ex.config.XMLmax)
+                                {
+                                    alert(Ex.config.msg.xml);
+                                    Ex.func.PlurkList(Ex.PlurkApi.plurks);
+
+                                    document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
+                                    return;
+                                }
+
+
+                                api.Send();
+
+                            });
+
+                        });
+
+
+
+                    break;
+
+                    case "PageChange":
+
+                        var path = e.target.dataset.path;
+                        var total = Ex.PlurkApi.search_plurks.length;
+                        var now_page = parseInt(Ex.flag.page);
+
+                        if(path==="next")
+                        {
+                            Ex.flag.page = now_page + 1;
+                        }
+                        else if(path==="prev")
+                        {
+                            Ex.flag.page = now_page - 1;
+                        }
+
+
+                        if(
+                            Ex.flag.page>Math.ceil(total/Ex.config.page_per_count) || 
+                            Ex.flag.page*Ex.config.page_per_count<=0) return;
+
+
+                        document.querySelector("#PageBar #page").value = Ex.flag.page;
+                        document.querySelector("#PlurkList").scrollTo(0,0);
+
+
+                        Ex.func.PlurkList( Ex.PlurkApi.plurks );
+
+                        Ex.func.PageControl();
+
+
+
+
+                    break;
+
+                }
+
+            },
+            DB:(path,mode,func)=>{
+
+
+                switch (mode)
+                {
+                    case "add":
+                        Ex.DB.ref(path).once("value",r=>{
+
+                            r = r.val()||0;
+
+                            Ex.DB.ref(path).set( parseInt(r)+1 );
+
+                        }).then(r=>{
+
+                            if(typeof(func)==="function") func(r);
+
+                        });
+
+                    break;
+                }
+                
+
+            },
+            StorageUpd:()=>{
+                localStorage[Ex.id] = JSON.stringify(Ex.flag.local);
+                sessionStorage[Ex.id] = JSON.stringify(Ex.flag.session);
+            },
+            PlurkDate:(IOSDate)=>{
+
+                return `${new Date(IOSDate).getFullYear()}-${new Date(IOSDate).getMonth()+1}-${new Date(IOSDate).getDate()} ${new Date(IOSDate).getHours().toString().padStart(2,'0')}:${new Date(IOSDate).getMinutes().toString().padStart(2,'0')}:${new Date(IOSDate).getSeconds().toString().padStart(2,'0')}`
+            }
+        },
+        ele:{
+
+        },
+        DB:{},
+        firebase:(url,func)=>{
+
+            if( typeof(firebase)!=='undefined' ) return;
+
+            var firebasejs = document.createElement("script");
+            firebasejs.src="https://www.gstatic.com/firebasejs/5.5.6/firebase.js";
+            document.head.appendChild(firebasejs);
+
+            var _t = setInterval(() => {
+                if( typeof(firebase)!=='undefined' )
+                {
+                    Ex.DB = firebase;
+                    Ex.DB.initializeApp({databaseURL:url});
+                    Ex.DB = Ex.DB.database();
+                    clearInterval(_t);
+
+                    if(typeof(func)==="function") func();
+
+                }
+            },100);
+
+        },
+        js:(url_ary)=>{
+
+
+            for(let i in url_ary)
+            {
+                setTimeout(()=>{
+                    var js = document.createElement("script");
+                    js.src = `${url_ary[i]}?s=${new Date().getTime()}`;
+                    document.head.appendChild(js);
+                },i*200);
+            }
+
+
+            var _t = setInterval(()=>{
+                if(typeof(PlurkApi)==="function")
+                {
+                    Ex.PlurkApi = new PlurkApi();
+                    clearInterval(_t);
+                }
+            },100);
+        },
+        css:(url_ary)=>{
+
+            for(var src of url_ary)
+            {
+                var link = document.createElement('link');
+                link.href = `${src}?s=${new Date().getTime()}`;
+                link.rel = 'stylesheet';
+                link.type = 'text/css';
+                document.head.appendChild(link);
+            }
+
+        },
+        init:()=>{
+
+            
+
+            Ex.firebase("https://kfs-plurk-default-rtdb.firebaseio.com/");
+
+
+            Ex.js(
+                ['https://kfsshrimp.github.io/sha1/core-min.js',
+                'https://kfsshrimp.github.io/sha1/sha1-min.js',
+                'https://kfsshrimp.github.io/sha1/hmac-min.js',
+                'https://kfsshrimp.github.io/sha1/enc-base64-min.js',
+                'https://kfsshrimp.github.io/plurk/api.js']
+            );
+
+            Ex.css(
+                ["style.css"]
+            )
+
+
+            Ex.flag.local = JSON.parse(localStorage[Ex.id]||`{}`);
+            Ex.flag.session = JSON.parse(sessionStorage[Ex.id]||`{}`);
+
+            Ex.func.StorageUpd();
+            
+            
+
+
+            document.body.innerHTML = `
+            <div id="SearchBar">
+            <input id="nick_name" value="" type="text" placeholder="噗浪帳號">
+
+            <select id="y_start" data-group="ymd_start" data-mode="ymdchange" data-event="ChangeEvent">${Ex.func.SelectYMD().y}</select>
+            <select id="m_start" data-group="ymd_start" data-mode="ymdchange" data-event="ChangeEvent">${Ex.func.SelectYMD().m}</select>
+            <select id="d_start" data-group="ymd_start" data-mode="ymdchange">${Ex.func.SelectYMD().d}</select>
+            ~
+            <select id="y_end" data-group="ymd_end" data-mode="ymdchange" data-event="ChangeEvent">${Ex.func.SelectYMD().y}</select>
+            <select id="m_end" data-group="ymd_end" data-mode="ymdchange" data-event="ChangeEvent">${Ex.func.SelectYMD().m}</select>
+            <select id="d_end" data-group="ymd_end" data-mode="ymdchange">${Ex.func.SelectYMD().d}</select>
+
+            <select id="sort" data-mode="sort" data-event="ChangeEvent">${Ex.func.SelectHtml(Ex.config.sort)}</select>
+            <select id="porn" data-mode="porn" data-event="ChangeEvent">${Ex.func.SelectHtml(Ex.config.porn)}</select>
+
+            <input data-event="ClickEvent" data-mode="Search" type="button" value="搜尋">
+            
+            </div>
+
+            <div id="Progress"></div>
+
+            <div id="PlurkList"></div>
+
+            <div id="PageBar">
+            <input id="prev" 
+            data-event="ClickEvent" 
+            data-mode="PageChange" 
+            data-path="prev" disabled
+            type="button" value="上一頁">
+
+            <input id="page" type="button" value="1">
+
+            <input id="next" 
+            data-event="ClickEvent" 
+            data-mode="PageChange" 
+            data-path="next" disabled
+            type="button" value="下一頁">
+            </div>`;
+
+            
+           
+            Ex.func.ChangeEvent();
+            Ex.func.ClickEvent();
+
+            Ex.func.Block(1);
+            
+            
+
+        }
+    }
+
+    
+
+    window.onload = ()=>{
+
+        Ex.init();
+
+
+    }
+    
+
+})();
