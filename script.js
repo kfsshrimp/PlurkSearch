@@ -541,7 +541,7 @@
                         var plurk = Ex.PlurkApi.search_plurks.filter(o=>{
                             if(o.plurk_id===parseInt(e.target.dataset.plurk_id)) return true;
                         })[0];
-                        console.log(plurk);
+
 
                         var text = `${plurk.content_raw}\nhttps://www.plurk.com/p/${parseInt(plurk.plurk_id).toString(36)}`;
 
