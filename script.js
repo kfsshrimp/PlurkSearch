@@ -51,7 +51,7 @@
                         <hr>
 
                         <div>
-                        【${data.no}】${Ex.func.PlurkDate(data.posted)} / 喜歡：<span class="fav">${data.favorite_count}</span> / 轉噗：<span class="rep">${data.replurkers_count}</span> / 回噗：<span class="rep">${data.response_count}</span> / <a href="https://www.plurk.com/p/${parseInt(data.plurk_id).toString(36)}" target="_blank">PLURK</a>
+                        【${data.no}】${Ex.func.PlurkDate(data.posted)} / 喜歡：<span class="fav">${data.favorite_count}</span> / 轉噗：<span class="rep">${data.replurkers_count}</span> / 回噗：<span class="rep">${data.response_count}</span> / <a href="https://www.plurk.com/p/${parseInt(data.plurk_id).toString(36)}" target="_blank">PLURK</a> / <a data-event="ClickEvent" data-plurk_id=${data.plurk_id} data-mode="TextPrint" id="TextPrint_${data.plurk_id}">複製</a>
 
                         </div>
 
@@ -216,6 +216,8 @@
 
 
                 Ex.func.PageControl();
+
+                Ex.func.ClickEvent();
 
 
             },
@@ -533,6 +535,22 @@
 
                     break;
 
+
+                    case "TextPrint":
+
+                        var plurk = Ex.PlurkApi.search_plurks.filter(o=>{
+                            if(o.plurk_id===parseInt(e.target.dataset.plurk_id)) return true;
+                        })[0];
+                        console.log(plurk);
+
+                        var text = `${plurk.content_raw}\nhttps://www.plurk.com/p/${parseInt(plurk.plurk_id).toString(36)}`;
+
+                        navigator.clipboard.writeText(text);
+                        
+                    break;
+
+
+
                     case "PageChange":
 
                         var path = e.target.dataset.path;
@@ -673,7 +691,7 @@
                 'https://kfsshrimp.github.io/sha1/sha1-min.js',
                 'https://kfsshrimp.github.io/sha1/hmac-min.js',
                 'https://kfsshrimp.github.io/sha1/enc-base64-min.js',
-                'https://kfsshrimp.github.io/plurk/api.js']
+                'https://kfsshrimp.github.io/js/PlurkApi.js']
             );
 
             Ex.css(
@@ -691,7 +709,7 @@
 
             document.body.innerHTML = `
             <div id="SearchBar">
-            <input id="nick_name" value="" type="text" placeholder="噗浪帳號">
+            <input id="nick_name" value="${(location.hostname===``)?"kfsshrimp4":""}" type="text" placeholder="噗浪帳號">
 
             <select id="y_start" data-group="ymd_start" data-mode="ymdchange" data-event="ChangeEvent">${Ex.func.SelectYMD().y}</select>
             <select id="m_start" data-group="ymd_start" data-mode="ymdchange" data-event="ChangeEvent">${Ex.func.SelectYMD().m}</select>
@@ -704,7 +722,11 @@
             <select id="sort" data-mode="sort" data-event="ChangeEvent">${Ex.func.SelectHtml(Ex.config.sort)}</select>
             <select id="porn" data-mode="porn" data-event="ChangeEvent">${Ex.func.SelectHtml(Ex.config.porn)}</select>
 
-            <input data-event="ClickEvent" data-mode="Search" type="button" value="搜尋">
+            <input data-event="ClickEvent" data-mode="Search" id="Search" type="button" value="搜尋">
+
+            <!--
+            <input data-event="ClickEvent" data-mode="TextPrint" id="TextPrint" type="button" value="快速顯示">
+            -->
             
             </div>
 

@@ -6,6 +6,14 @@ body{
     text-align: center;
 }
 
+a{
+    cursor: pointer;
+    text-decoration: underline;
+}
+a:hover{
+    color: #f00;
+}
+
 
 div#SearchBar{
     padding: 4px;
