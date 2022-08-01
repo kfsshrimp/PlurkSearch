@@ -1,5 +1,5 @@
 (()=>{
-    Ex = {
+    var Ex = {
         id:"PlurkSearch",
         config:{
             sort:{
@@ -135,16 +135,23 @@
 
                 document.querySelector("#PlurkList").innerHTML = ``;
                 
-                var start = ``,end = ``,
+                var start = ``,end = ``,p_start = ``,p_end = ``,
                 ymd = document.querySelectorAll(`select[data-mode="ymdchange"]`),
                 sort = document.querySelector(`select[data-mode="sort"]`),
                 porn = document.querySelector(`select[data-mode="porn"]`);
 
-                start = `${ymd[3].value}/${ymd[4].value}/${ymd[5].value}`;
-                end = `${ymd[0].value}/${ymd[1].value}/${ymd[2].value}`;
+
+                p_start = `${ymd[3].value}/${ymd[4].value}/${ymd[5].value}`;
+                p_end = `${ymd[0].value}/${ymd[1].value}/${ymd[2].value}`;
+
+                start = new Date(p_start);
+                end = new Date(p_end);
+
+                start = new Date( start.setDate( start.getDate()+1 ) )
 
                 var search_plurks = [];
 
+                
                 
                 for(var i in plurks)
                 {
@@ -152,6 +159,9 @@
 
                     
                     if( 
+                        new Date(data.posted).toISOString() >= end.toISOString() && 
+                        new Date(data.posted).toISOString() <= start.toISOString() && 
+                        /*
                         (
                             new Date(data.posted).getFullYear()<=parseInt(ymd[3].value) && 
                             new Date(data.posted).getFullYear().toString()>=parseInt(ymd[0].value)
@@ -166,7 +176,7 @@
                             new Date(data.posted).getDate()<=parseInt(ymd[5].value) && 
                             new Date(data.posted).getDate()>=parseInt(ymd[2].value)
                         )
-                        &&
+                        */
                         (
                             porn.value===data.porn.toString() || 
                             porn.value==="all"
@@ -212,7 +222,7 @@
                 }
                 
 
-                document.querySelector("#Progress").innerHTML = Ex.config.msg.search_end(end,start,search_plurks.length,Ex.config.max-Ex.flag.NickNameCount);
+                document.querySelector("#Progress").innerHTML = Ex.config.msg.search_end(p_end,p_start,search_plurks.length,Ex.config.max-Ex.flag.NickNameCount);
 
 
                 Ex.func.PageControl();
@@ -445,7 +455,6 @@
                                     
                                     api.arg.offset = new Date( new Date(api.plurks[api.plurks.length-1].posted) ).toISOString();
 
-
                                     Ex.func.DB(`PlurkSearch/nick_name/${nick_name}/${Ex.flag.PlurkDay}`,`add`,(r)=>{
 
                                         r = r.val()||0;
@@ -455,6 +464,7 @@
                                         if(r>=Ex.config.max)
                                         {
                                             alert(Ex.config.msg.day_limit(nick_name));
+
                                             Ex.func.PlurkList(Ex.PlurkApi.plurks);
 
                                             document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
@@ -473,7 +483,7 @@
                                                 document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
                                                 return;
                                             }
-            
+                                            
             
                                             api.Send();
             
@@ -538,9 +548,10 @@
 
                     case "TextPrint":
 
-                        var plurk = Ex.PlurkApi.search_plurks.filter(o=>{
+                        var plurk = Ex.PlurkApi.plurks.filter(o=>{
                             if(o.plurk_id===parseInt(e.target.dataset.plurk_id)) return true;
                         })[0];
+
 
 
                         var text = `${plurk.content_raw}\nhttps://www.plurk.com/p/${parseInt(plurk.plurk_id).toString(36)}`;
