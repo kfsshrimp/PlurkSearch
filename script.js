@@ -1,5 +1,5 @@
 (()=>{
-    var Ex = {
+    Ex = {
         id:"PlurkSearch",
         config:{
             sort:{
@@ -124,13 +124,11 @@
                                 {
                                     if(Ex.func.JsonChild(data,v)===undefined)
                                     {
-                                        if(data.Detail.plurks===undefined)
-                                        {
-                                            if(data.Detail.privacy==="only_friends")
-                                                _return += `私密河道`;
-                                            else
-                                                _return += `未發噗`;
-                                        }   
+                                        if(data.Detail.privacy==="only_friends")
+                                            _return += `私密河道`;
+                                        else
+                                            _return += `未發噗`;
+                                        
                                     }
                                     else
                                     {
