@@ -23,6 +23,10 @@
                 "false":"非成人"
             },
             karma_limit:50,
+            fans_cfg:{
+                fans_count_max:100,
+                fans_api_sec:100
+            },
             loop_sec:2000,
             loop_safe:100,
             page_per_count:20,
@@ -667,7 +671,10 @@
                     }
                     catch(e){
 
-                        console.log(e);
+                        Ex.func.DisabledBtn([`[data-mode="GetFans"]`,`[data-mode="Search"]`],false);
+
+                        console.log("error");
+                        //console.log(e);
                         return;
                     }
                 }
@@ -727,7 +734,7 @@
 
                             Ex.func.FansDetail(fans,i);
 
-                        },50);
+                        },Ex.config.fans_cfg.fans_api_sec);
                     }
                     else
                     {
@@ -745,13 +752,11 @@
             },
             GetFuns:()=>{
 
-
                 Ex.func.UsersDetail( document.querySelector("#nick_name").value,{include_plurks:"false"},(user)=>{
 
                     var api = Ex.PlurkApi;
 
                     
-
                     
                     api.act = "FriendsFans/getFansByOffset";
                     api.arg.user_id = user.user_info.id;
@@ -777,6 +782,15 @@
                         {
                             document.querySelector("#Progress").innerHTML = Ex.config.msg.search_fans_end(0);
 
+                            if(api.fans.length>Ex.config.fans_cfg.fans_count_max)
+                            {
+                                if(confirm(`粉絲數過多，第一次讀取需要較長時間，確定要繼續嗎？`)===false){
+
+                                    Ex.func.DisabledBtn([`[data-mode="GetFans"]`,`[data-mode="Search"]`],false);
+                                    return;
+                                }
+                            }
+
 
                             Ex.func.FansDetail(api.fans,0);
     
@@ -791,7 +805,7 @@
                             
                             api.Send();
     
-                        },50);
+                        },Ex.config.fans_cfg.fans_api_sec);
     
                     }
                     
