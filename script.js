@@ -8,11 +8,21 @@
                 "replurkers_count":"轉噗數",
                 "response_count":"回噗數"
             },
+            fans_sort:{
+                "karma":"卡瑪",
+                "Detail.friends_count":"好友",
+                "Detail.fans_count":"粉絲",
+                "Detail.user_info.plurks_count":"發噗數",
+                "Detail.user_info.response_count":"回噗數",
+                "Detail.user_info.join_date":"註冊時間",
+                "Detail.plurks.0.posted":"最後發噗時間",
+            },
             porn:{
                 "all":"全部",
                 "true":"成人",
                 "false":"非成人"
             },
+            karma_limit:50,
             loop_sec:2000,
             loop_safe:100,
             page_per_count:20,
@@ -28,6 +38,9 @@
                 Progress:(number,day)=>{
                     return `搜尋中：${number}%(${day})`;
                 },
+                search_fans_end:(detail_count)=>{
+                    return `共有 ${Ex.PlurkApi.fans.length} 粉絲, ${detail_count} 名已讀取完畢`
+                },
                 nick_name_err:`帳號輸入有誤`,
                 xml:`系統今日已達查詢上限,請明日再查詢`,
                 time_range_err:`開始時間不可大於結果時間`,
@@ -35,6 +48,13 @@
             }
         },
         flag:{
+            PageControl:{
+                mode:'',
+                total:0,
+                page:1
+            },
+            fans_sort:"karma",
+            sort_desc:true,
             page:1,
             local:{},
             session:{}
@@ -59,6 +79,156 @@
                 </div>`;
 
                 return div;
+            },
+            FanSort:()=>{
+                var div = document.createElement("div");
+
+                div.innerHTML = `
+                <div class="PlurkDiv">
+                    <div>
+                        排序：
+                        
+                        <select id="fans_sort" data-mode="fans_sort" data-event="ChangeEvent">${Ex.func.SelectHtml(Ex.config.fans_sort,Ex.flag.fans_sort)}</select>
+
+                        <input type="button" data-mode="sort_desc" id="sort_desc" data-event="ClickEvent" value="排序倒反">
+
+
+
+                    </div>
+                </div>`;
+
+                return div;
+            },
+            Fan:(data)=>{
+
+                var table = ``;
+
+                table += `
+                
+                    <tr>
+                        <td>
+                        <a target="_blank" href="https://www.plurk.com/${data.nick_name}">${data.display_name}</a> (${data.nick_name})
+                        </td>
+
+                        ${Object.keys(Ex.config.fans_sort).map((v)=>{
+
+                            var _return = `<td data-sort="${v}">`;
+
+                            if(data.karma>Ex.config.karma_limit)
+                            {
+                                if(v.indexOf("join_date")!==-1 || v.indexOf("posted")!==-1)
+                                {
+                                    if(Ex.func.JsonChild(data,v)===undefined)
+                                    {
+                                        if(data.Detail.plurks===undefined)
+                                        {
+                                            if(data.Detail.privacy==="only_friends")
+                                                _return += `私密河道`;
+                                            else
+                                                _return += `未發噗`;
+                                        }   
+                                    }
+                                    else
+                                    {
+                                        _return += Ex.func.PlurkDate(Ex.func.JsonChild(data,v));
+                                    }
+                                }
+                                else
+                                {
+                                    _return +=  `${Ex.func.JsonChild(data,v)}`;
+                                }
+                            }
+                            else
+                            {
+                                _return += `卡瑪低於${Ex.config.karma_limit},略過`;
+ 
+                                
+                            }
+                            
+                            _return += `</td>`;
+
+
+                            return _return;
+
+                        }).join("")}
+
+                    </tr>
+                
+                `;
+
+                return table;
+
+                var div = document.createElement("div");
+
+                div.innerHTML = `
+                <div class="PlurkDiv">
+                    <div>
+                    <a target="_blank" href="https://www.plurk.com/${data.nick_name}">${data.display_name}</a> (${data.nick_name})
+                    <hr>
+
+                    ${Object.keys(Ex.config.fans_sort).map((v)=>{
+
+                        var _return = `${Ex.config.fans_sort[v]}：`;
+
+                        if(data.karma>Ex.config.karma_limit)
+                        {
+                            if(v.indexOf("join_date")!==-1 || v.indexOf("posted")!==-1)
+                            {
+                                if(Ex.func.JsonChild(data,v)===undefined)
+                                {
+                                    if(data.Detail.plurks===undefined)
+                                    {
+                                        if(data.Detail.privacy==="only_friends")
+                                            _return += `私密河道`;
+                                        else
+                                            _return += `未發噗`;
+                                    }   
+                                }
+                                else
+                                {
+                                    _return += Ex.func.PlurkDate(Ex.func.JsonChild(data,v));
+                                }
+                            }
+                            else
+                            {
+                                _return +=  `${Ex.func.JsonChild(data,v)||''}`;
+                            }
+                        }
+                        else
+                        {
+                            _return += `卡瑪低於${Ex.config.karma_limit},略過讀取`;
+                        }
+                        
+
+
+                        _return += `<BR>`;
+
+
+                        return _return;
+
+                    }).join("")}
+
+                    <hr>
+                    
+
+
+                    </div>
+                </div>`;
+
+                return div;
+            },
+            PageSelect:(total)=>{
+
+                var select = document.createElement("select");
+                select.dataset.mode = "PageChange";
+                select.dataset.event = "ChangeEvent";
+                select.id = "PageChange";
+
+                select.innerHTML = Ex.func.SelectHtml(total,Ex.flag.PageControl.page)
+
+                
+                return select;
+
             }
         },
         func:{
@@ -94,6 +264,7 @@
                     r++;
                     div.querySelector("div").style.transform = `rotate(${r}deg)`;
                     
+                    
                 },1);
                 
                 setTimeout(()=>{
@@ -105,33 +276,98 @@
                 
 
             },
-            PageControl:()=>{
+            PageChange:(path)=>{
 
-                var total = Ex.PlurkApi.search_plurks.length;
 
-                document.querySelectorAll(`#PageBar [data-mode="PageChange"]`).forEach(o=>{
-                    o.setAttribute("disabled","");
-                });
-
-                if( (Ex.flag.page*1+1)<=Math.ceil(total/Ex.config.page_per_count) )
+                
+                if(path==="next")
                 {
-                    document.querySelector(`#PageBar [data-path="next"]`).removeAttribute("disabled");
+                    Ex.flag.PageControl.page += 1;
+                }
+                else if(path==="prev")
+                {
+                    Ex.flag.PageControl.page -= 1;
+                }
+                else
+                {
+                    Ex.flag.PageControl.page = parseInt(path);
                 }
 
-                if( (Ex.flag.page-1)*Ex.config.page_per_count>0)
-                {
-                    document.querySelector(`#PageBar [data-path="prev"]`).removeAttribute("disabled");
-                }
 
-                if(Ex.PlurkApi.plurks.length<=Ex.config.page_per_count)
-                {
-                    document.querySelectorAll(`#PageBar [data-mode="PageChange"]`).forEach(o=>{
-                        o.setAttribute("disabled","");
-                    });
-                }
+                if(
+                    Ex.flag.PageControl.page>Math.ceil(Ex.flag.PageControl.total/Ex.config.page_per_count) || 
+                    Ex.flag.PageControl.page*Ex.config.page_per_count<=0) return;
+
+                
+                document.querySelector("#PlurkList").scrollTo(0,0);
+
+
+                (Ex.flag.PageControl.mode==="plurks")?Ex.func.PlurkList():Ex.func.FanList();
+
 
             },
-            PlurkList:(plurks)=>{
+            PageControl:( mode = "plurks" )=>{
+
+                var total = Ex.PlurkApi[`search_${mode}`].length;
+                
+                Ex.flag.PageControl = {
+                    mode:mode,
+                    total:Ex.PlurkApi[`search_${mode}`].length,
+                    page:Ex.flag.PageControl.page
+                };
+
+                Ex.func.DisabledBtn(`#PageBar [data-mode="PageChange"]`,true);
+
+
+                if( (Ex.flag.PageControl.page*1+1)<=Math.ceil(total/Ex.config.page_per_count) )
+                {
+
+                    Ex.func.DisabledBtn(`#PageBar [data-path="next"]`,false);
+                }
+
+                if( (Ex.flag.PageControl.page-1)*Ex.config.page_per_count>0)
+                {
+                    Ex.func.DisabledBtn(`#PageBar [data-path="prev"]`,false);
+                    
+                }
+
+                if(Ex.PlurkApi[mode].length<=Ex.config.page_per_count)
+                {
+
+                    Ex.func.DisabledBtn(`#PageBar [data-mode="PageChange"]`,true);
+                    
+                }
+
+                document.querySelector("#PageBar #page").innerHTML = ``;
+                document.querySelector("#PageBar #page").appendChild(Ex.temp.PageSelect(Math.ceil(Ex.flag.PageControl.total/Ex.config.page_per_count)));
+
+
+                Ex.func.ClickEvent();
+                Ex.func.ChangeEvent();
+
+
+            },
+            PlurkTime:( func )=>{
+
+                var api = Ex.PlurkApi;
+
+                api.act = "checkTime";
+                api.func = (r)=>{
+                    r = JSON.parse(r.response);
+                    Ex.flag.PlurkTime = new Date(r.timestamp * 1000);
+                    Ex.flag.PlurkDay = `${Ex.flag.PlurkTime.getFullYear()}-${Ex.flag.PlurkTime.getMonth()+1}-${Ex.flag.PlurkTime.getDate()}`;
+
+                    if(typeof(func)==="function") setTimeout(() => {func();},0);
+                }
+                api.Send();
+
+            },
+            PlurkList:()=>{
+
+                var plurks = Ex.PlurkApi.plurks;
+
+                Ex.flag.ClickEventRegister = [];
+                Ex.flag.ChangeEventRegister = [];
 
                 document.querySelector("#PlurkList").innerHTML = ``;
                 
@@ -212,7 +448,7 @@
                     data.no = i*1+1;
 
 
-                    if( (Ex.flag.page-1)*Ex.config.page_per_count>=data.no || Ex.flag.page*Ex.config.page_per_count<data.no ) continue;
+                    if( (Ex.flag.PageControl.page-1)*Ex.config.page_per_count>=data.no || Ex.flag.PageControl.page*Ex.config.page_per_count<data.no ) continue;
 
                     document.querySelector("#PlurkList").appendChild(
 
@@ -224,10 +460,87 @@
 
                 document.querySelector("#Progress").innerHTML = Ex.config.msg.search_end(p_end,p_start,search_plurks.length,Ex.config.max-Ex.flag.NickNameCount);
 
+                Ex.func.DisabledBtn([`[data-mode="GetFans"]`,`[data-mode="Search"]`],false);
+
+
+                
 
                 Ex.func.PageControl();
 
-                Ex.func.ClickEvent();
+                
+
+            },
+            FanList:()=>{
+
+                var fans = Ex.PlurkApi.fans;
+
+                Ex.flag.ClickEventRegister = [];
+                Ex.flag.ChangeEventRegister = [];
+
+                document.querySelector("#PlurkList").innerHTML = ``;
+                
+         
+                var search_fans = fans;
+
+               
+
+                
+                search_fans.sort( (a,b)=>{
+
+                    var _a = Ex.func.JsonChild(a,Ex.flag.fans_sort)||0,
+                    _b = Ex.func.JsonChild(b,Ex.flag.fans_sort)||0
+
+                    if(Ex.flag.fans_sort.indexOf("join_date")!==-1 || Ex.flag.fans_sort.indexOf("posted")!==-1)
+                    {
+                        _a = (_a===0)?new Date(0):new Date(_a);
+                        _b = (_b===0)?new Date(0):new Date(_b);
+                    }
+                    
+                    return (Ex.flag.sort_desc)?(_b - _a):(_a - _b);
+                    
+                });
+                
+
+
+                Ex.PlurkApi.search_fans = search_fans;
+
+                document.querySelector("#PlurkList").appendChild(Ex.temp.FanSort());
+
+                var table = document.createElement("table");
+                table.id = "FanListTable";
+
+                table.innerHTML = `
+                <tr>
+                    <td>帳號</td>
+                    ${Object.keys(Ex.config.fans_sort).map((v)=>{
+    
+                        return `<td data-sort="${v}">${Ex.config.fans_sort[v]}</td>`;
+    
+                    }).join("")}
+                </tr>`;
+
+
+                for(var i in search_fans)
+                {
+                    let data = search_fans[i];
+
+                    data.no = i*1+1;
+
+                    if( (Ex.flag.PageControl.page-1)*Ex.config.page_per_count>=data.no || Ex.flag.PageControl.page*Ex.config.page_per_count<data.no ) continue;
+
+                    table.innerHTML += Ex.temp.Fan(data)
+
+                    document.querySelector("#PlurkList").appendChild(table);
+                }
+
+                Ex.func.DisabledBtn([`[data-mode="GetFans"]`,`[data-mode="Search"]`],false);
+
+
+
+                document.querySelectorAll(`td[data-sort="${Ex.flag.fans_sort}"]`).forEach(o=>{o.className = "SortNow";});
+                
+
+                Ex.func.PageControl('fans');
 
 
             },
@@ -250,10 +563,31 @@
             },
             SelectHtml:(obj,val)=>{
                 var html = ``;
-                for(var v in obj)
-                    html += `<option value="${v}" ${(v===val)?"selected":""}>${obj[v]}</option>`
+
+                if(typeof(obj)==="number")
+                {
+                    for(var i=1;i<=obj;i++)
+                        html += `<option value="${i}" ${(i===val)?"selected":""}>${i}</option>`
+                }
+                else
+                {
+                    for(var v in obj)
+                        html += `<option value="${v}" ${(v===val)?"selected":""}>${obj[v]}</option>`
+                }
 
                 return html;
+            },
+            DisabledBtn:(select,mode)=>{
+
+                if(!Array.isArray(select)) select = [select];
+
+                select.forEach(o => {
+                    
+                    o = document.querySelectorAll(o);
+
+                    (mode)?o.forEach(_o=>{_o.setAttribute("disabled","disabled")}):o.forEach(_o=>{_o.removeAttribute("disabled")});
+                });
+
             },
             ChangeEvent:(e)=>{
 
@@ -284,19 +618,188 @@
                         ymd[2].innerHTML = Ex.func.SelectYMD( ymd[0].value,ymd[1].value,1 ).d;
                     break;
 
+                    case "PageChange":
+
+                        Ex.func.PageChange(e.target.value);
+
+                    break;
+
                     case "sort":
 
-                        Ex.func.PlurkList(Ex.PlurkApi.plurks);
+                        Ex.func.PlurkList();
 
                     break;
 
                     case "porn":
 
-                        Ex.func.PlurkList(Ex.PlurkApi.plurks);
+                        Ex.func.PlurkList();
+
+                    break;
+
+                    case "fans_sort":
+
+                        Ex.flag.fans_sort = e.target.value;
+
+
+                        Ex.func.FanList();
 
                     break;
 
                 }
+
+            },
+            UsersDetail:(nick_name,arg,func)=>{
+
+                var api = Ex.PlurkApi;
+
+                api.arg = arg;
+
+                api.act = "Profile/getPublicProfile";
+                api.arg.nick_name = "";
+                api.mode = "CORS";
+
+                api.arg.nick_name = nick_name;
+
+                api.func = (r)=>{
+                    try{
+                        r = JSON.parse(r.response);
+                        func(r);
+                    }
+                    catch(e){
+
+                        console.log(e);
+                        return;
+                    }
+                }
+
+                api.Send();
+            },
+            FansDetail:(fans,i)=>{
+
+
+                if(fans[i]===undefined)
+                {
+
+                    Ex.DB.ref(`PlurkSearch/nick_name/${document.querySelector("#nick_name").value}/${Ex.flag.PlurkDay}/search_fans`).set(Ex.PlurkApi.fans);
+
+
+                    Ex.func.FanList();
+                    console.log(`【Get End】`);
+                    return;
+                }
+
+                if(fans[i].karma<Ex.config.karma_limit)
+                {
+                    setTimeout(()=>{
+
+                        i++;
+                        document.querySelector("#Progress").innerHTML = Ex.config.msg.search_fans_end(i);
+
+                        document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 ${i/Ex.PlurkApi.fans.length*100}% , #999 0%)`;
+
+
+                        Ex.func.FansDetail(fans,i);
+
+                    },0);
+
+                    return;
+                }
+
+                Ex.func.UsersDetail(fans[i].nick_name,{include_plurks:"true"},(r)=>{
+
+                    console.log(`Get ${fans[i].nick_name}`);
+
+                    (r.plurks.length>0)?r.plurks = [r.plurks.shift()]:null;
+
+                    fans[i].Detail = r;
+
+                    i++;
+
+                    document.querySelector("#Progress").innerHTML = Ex.config.msg.search_fans_end(i);
+
+                    document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 ${i/Ex.PlurkApi.fans.length*100}% , #999 0%)`;
+                    
+                    
+                    if(fans[i]!==undefined)
+                    {
+
+                        setTimeout(()=>{
+
+                            Ex.func.FansDetail(fans,i);
+
+                        },50);
+                    }
+                    else
+                    {
+
+                        Ex.DB.ref(`PlurkSearch/nick_name/${document.querySelector("#nick_name").value}/${Ex.flag.PlurkDay}/search_fans`).set(Ex.PlurkApi.fans);
+
+
+                        Ex.func.FanList();
+                        console.log(`【Get End】`);
+                    }
+                    
+                });
+
+
+            },
+            GetFuns:()=>{
+
+
+                Ex.func.UsersDetail( document.querySelector("#nick_name").value,{include_plurks:"false"},(user)=>{
+
+                    var api = Ex.PlurkApi;
+
+                    
+
+                    
+                    api.act = "FriendsFans/getFansByOffset";
+                    api.arg.user_id = user.user_info.id;
+                    api.arg.offset = "0";
+                    api.arg.limit = "100";
+                    api.func = (r)=>{
+                    
+                        api.fans = api.fans||[];
+    
+                        try{
+                            r = JSON.parse(r.response);
+                        }
+                        catch(e){
+    
+                            console.log(e);
+                            return;
+                        }
+    
+                        api.fans = api.fans.concat(r);
+    
+                        
+                        if(r.length===0)
+                        {
+                            document.querySelector("#Progress").innerHTML = Ex.config.msg.search_fans_end(0);
+
+
+                            Ex.func.FansDetail(api.fans,0);
+    
+                            return;
+                        }
+    
+                        setTimeout(()=>{
+    
+                            api.arg.user_id = user.user_info.id;
+                            api.arg.limit = "100";
+                            api.arg.offset -= -1*r.length;
+                            
+                            api.Send();
+    
+                        },50);
+    
+                    }
+                    
+                    api.Send();
+
+
+
+                });
 
             },
             ClickEvent:(e)=>{
@@ -322,229 +825,270 @@
                 switch (e.target.dataset.mode){
 
 
-                    case "Search":
-                        
-                        document.querySelector(`[data-mode="Search"]`).setAttribute("disabled","");
+                    case "GetFans":
 
-                        var nick_name = document.querySelector("#nick_name").value;
+                        Ex.func.DisabledBtn([`[data-mode="GetFans"]`,`[data-mode="Search"]`],true);
 
-                        var api = Ex.PlurkApi;
+                        Ex.func.PlurkTime(()=>{
 
-                        api.act = "checkTime";
-                        api.func = (r)=>{
-                            r = JSON.parse(r.response);
-                            Ex.flag.PlurkTime = new Date(r.timestamp * 1000);
-                            Ex.flag.PlurkDay = `${Ex.flag.PlurkTime.getFullYear()}-${Ex.flag.PlurkTime.getMonth()+1}-${Ex.flag.PlurkTime.getDate()}`;
-                        }
-                        api.Send();
+                            Ex.DB.ref(`PlurkSearch/nick_name/${document.querySelector("#nick_name").value}`).once("value",r=>{
 
-                        
+                                r = r.val();
 
-
-                        api.plurks = [];
-                        document.querySelector("#PlurkList").innerHTML = ``;
-                        Ex.flag.page = 1;
-                        document.querySelector("#PageBar #page").value = Ex.flag.page;
-                        
-
-
-                        var start = ``,end = ``,ymd = document.querySelectorAll(`select[data-mode="ymdchange"]`);
-
-                        start = `${ymd[3].value}/${ymd[4].value}/${ymd[5].value}`;
-                        end = `${ymd[0].value}/${ymd[1].value}/${ymd[2].value}`;
-
-                        if(nick_name==='')
-                        {
-                            alert(Ex.config.msg.nick_name_err);
-                            document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
-                            return;
-                        }
-
-                        if( new Date(start)<new Date(end) )
-                        {
-                            alert(Ex.config.msg.time_range_err);
-                            document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
-                            return;
-                        }
-
-
-                        if( (((new Date(start) - new Date(end)) / 1000) / 60 / 60 / 24) >= 31 )
-                        {
-                            alert(Ex.config.msg.time_range_err2);
-                            document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
-                            return;
-                        }
-
-
-
-                        api.act = "Timeline/getPublicPlurks";
-                        api.arg.minimal_data = "true";
-                        api.arg.minimal_user = "true";
-                        api.arg.nick_name = document.querySelector("#nick_name").value;
-                        api.arg.limit = "100";
-                        api.arg.only_user = "true";
-                        api.mode = "CORS";
-
-                        start = new Date(start).setHours(24+8);
-                        end = new Date(end).setHours(8);
-
-
-
-                        api.arg.offset = new Date(start).toISOString();
-
-                        
-                        var safe = 0;
-                        api.func = (r)=>{ 
-
-
-                            api.plurks = api.plurks||[];
-    
-                            try{
-                                r = JSON.parse(r.response);
-                            }
-                            catch(err){
-                                console.log(end);
+                                r[Ex.flag.PlurkDay] = r[Ex.flag.PlurkDay]||{};
                                 
-                                Ex.func.PlurkList(Ex.PlurkApi.plurks);
-
-                                document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 100% , #999 0%)`;
-
-                                document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
-                                return;
-                            }
-    
-                            if(r.plurks.length===0)
-                            {
-                                Ex.func.PlurkList(Ex.PlurkApi.plurks);
-
-                                document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 100% , #999 0%)`;
-
-                                document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
-                                return;
-                            }
-    
-                        
-                            api.plurks = api.plurks.concat(r.plurks);
-                        
-
-                            safe++;
-                            if(safe>Ex.config.loop_safe){console.log('loop_safe break');return;}
-                            
-                            
-                            
-                            var s = Math.floor(new Date(start).getTime()/1000/60/60/24);
-                            var e = Math.floor(new Date(end).getTime()/1000/60/60/24);
-                            var p = Math.floor(new Date(api.plurks[api.plurks.length-1].posted).getTime()/1000/60/60/24);
-
-                            var progress = Math.floor( ( s - e - (p - e) ) / ( s - e ) * 100 );
 
 
-                            document.querySelector("#Progress").innerHTML = Ex.config.msg.Progress(
-                                progress,
-                                new Date(api.plurks[api.plurks.length-1].posted).toISOString().split("T")[0]
-                                );
-
-                            document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 ${progress}% , #999 0%)`;
-
-
-
-
-                            if(new Date(api.plurks[api.plurks.length-1].posted).toISOString() >= new Date(end).toISOString())
-                            {
-                                setTimeout(()=>{
-                                    
-                                    api.arg.offset = new Date( new Date(api.plurks[api.plurks.length-1].posted) ).toISOString();
-
-                                    Ex.func.DB(`PlurkSearch/nick_name/${nick_name}/${Ex.flag.PlurkDay}`,`add`,(r)=>{
-
-                                        r = r.val()||0;
-
-                                        Ex.flag.NickNameCount = r;
-
-                                        if(r>=Ex.config.max)
-                                        {
-                                            alert(Ex.config.msg.day_limit(nick_name));
-
-                                            Ex.func.PlurkList(Ex.PlurkApi.plurks);
-
-                                            document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
-                                            return;
-                                        }
-
-                                        Ex.func.DB(`PlurkSearch/XmlCount/${Ex.flag.PlurkDay}`,`add`,(r)=>{
-
-                                            r = r.val()||0;
-            
-                                            if(r>=Ex.config.XMLmax)
-                                            {
-                                                alert(Ex.config.msg.xml);
-                                                Ex.func.PlurkList(Ex.PlurkApi.plurks);
-            
-                                                document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
-                                                return;
-                                            }
-                                            
-            
-                                            api.Send();
-            
-                                        });
-            
-                                    });                               
-                        
-                                },Ex.config.loop_sec);
-                            }
-                            else
-                            {
-                                Ex.func.PlurkList(Ex.PlurkApi.plurks);
-                                
-                                document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
-                            }    
-                        }
-
-
-                        
-
-                        Ex.func.DB(`PlurkSearch/nick_name/${nick_name}/${Ex.flag.PlurkDay}`,`add`,(r)=>{
-
-                            r = r.val()||0;
-
-                            Ex.flag.NickNameCount = r;
-
-                            if(r>=Ex.config.max)
-                            {
-                                alert(Ex.config.msg.day_limit(nick_name));
-                                Ex.func.PlurkList(Ex.PlurkApi.plurks);
-
-                                document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
-                                return;
-                            }
-
-                            Ex.func.DB(`PlurkSearch/SearchCount/${Ex.flag.PlurkDay}`,`add`);
-
-                            Ex.func.DB(`PlurkSearch/XmlCount/${Ex.flag.PlurkDay}`,`add`,(r)=>{
-
-                                r = r.val()||0;
-
-                                if(r>=Ex.config.XMLmax)
+                                for(var day in r)
                                 {
-                                    alert(Ex.config.msg.xml);
-                                    Ex.func.PlurkList(Ex.PlurkApi.plurks);
+                                    if(day===Ex.flag.PlurkDay) continue;
 
-                                    document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
-                                    return;
+                                    r[day].search_fans = 1;
+                                }
+                                
+
+                                if(r[Ex.flag.PlurkDay].search_fans!==undefined)
+                                {
+                                    Ex.PlurkApi.fans = r[Ex.flag.PlurkDay].search_fans;
+                                    Ex.func.FanList();
+                                }
+                                else
+                                {
+                                    Ex.func.GetFuns();
                                 }
 
-
-                                api.Send();
+                                Ex.DB.ref(`PlurkSearch/nick_name/${document.querySelector("#nick_name").value}`).set(r);
 
                             });
 
                         });
 
-
-
                     break;
 
+
+                    case "Search":
+                        
+                        Ex.func.DisabledBtn([`[data-mode="GetFans"]`,`[data-mode="Search"]`],true);
+
+
+                        var nick_name = document.querySelector("#nick_name").value;
+
+
+
+                        Ex.func.PlurkTime(()=>{
+
+                            var api = Ex.PlurkApi;
+
+
+                            api.plurks = [];
+                            document.querySelector("#PlurkList").innerHTML = ``;
+                            Ex.flag.PageControl.page = 1;
+                            
+
+
+                            var start = ``,end = ``,ymd = document.querySelectorAll(`select[data-mode="ymdchange"]`);
+
+                            start = `${ymd[3].value}/${ymd[4].value}/${ymd[5].value}`;
+                            end = `${ymd[0].value}/${ymd[1].value}/${ymd[2].value}`;
+
+                            if(nick_name==='')
+                            {
+                                alert(Ex.config.msg.nick_name_err);
+                                Ex.func.DisabledBtn([`[data-mode="GetFans"]`,`[data-mode="Search"]`],false);
+                                return;
+                            }
+
+                            if( new Date(start)<new Date(end) )
+                            {
+                                alert(Ex.config.msg.time_range_err);
+                                Ex.func.DisabledBtn([`[data-mode="GetFans"]`,`[data-mode="Search"]`],false);
+                                return;
+                            }
+
+
+                            if( (((new Date(start) - new Date(end)) / 1000) / 60 / 60 / 24) >= 31 )
+                            {
+                                alert(Ex.config.msg.time_range_err2);
+                                Ex.func.DisabledBtn([`[data-mode="GetFans"]`,`[data-mode="Search"]`],false);
+                                return;
+                            }
+
+
+
+                            api.act = "Timeline/getPublicPlurks";
+                            api.arg.minimal_data = "true";
+                            api.arg.minimal_user = "true";
+                            api.arg.nick_name = document.querySelector("#nick_name").value;
+                            api.arg.limit = "100";
+                            api.arg.only_user = "true";
+                            api.mode = "CORS";
+
+                            start = new Date(start).setHours(24+8);
+                            end = new Date(end).setHours(8);
+
+
+                            api.arg.offset = new Date(start).toISOString();
+                            
+                            
+                            var safe = 0;
+                            api.func = (r)=>{ 
+
+                                api.plurks = api.plurks||[];
+        
+                                try{
+                                    r = JSON.parse(r.response);
+                                }
+                                catch(err){
+                                    console.log(end);
+                                    
+                                    Ex.func.PlurkList();
+
+                                    document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 100% , #999 0%)`;
+
+                                    return;
+                                }
+        
+                                if(r.plurks.length===0)
+                                {
+                                    Ex.func.PlurkList();
+
+                                    document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 100% , #999 0%)`;
+
+                                    return;
+                                }
+        
+                            
+                                api.plurks = api.plurks.concat(r.plurks);
+                            
+
+                                safe++;
+                                if(safe>Ex.config.loop_safe){console.log('loop_safe break');return;}
+                                
+                                
+                                
+                                var s = Math.floor(new Date(start).getTime()/1000/60/60/24);
+                                var e = Math.floor(new Date(end).getTime()/1000/60/60/24);
+                                var p = Math.floor(new Date(api.plurks[api.plurks.length-1].posted).getTime()/1000/60/60/24);
+
+                                var progress = Math.floor( ( s - e - (p - e) ) / ( s - e ) * 100 );
+
+
+                                document.querySelector("#Progress").innerHTML = Ex.config.msg.Progress(
+                                    progress,
+                                    new Date(api.plurks[api.plurks.length-1].posted).toISOString().split("T")[0]
+                                    );
+
+                                document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 ${progress}% , #999 0%)`;
+
+
+
+
+                                if(new Date(api.plurks[api.plurks.length-1].posted).toISOString() >= new Date(end).toISOString())
+                                {
+                                    setTimeout(()=>{
+                                        
+                                        api.arg.offset = new Date( new Date(api.plurks[api.plurks.length-1].posted) ).toISOString();
+
+                                        Ex.func.DB(`PlurkSearch/nick_name/${nick_name}/${Ex.flag.PlurkDay}/search_count`,`add`,(r)=>{
+
+                                            r = r.val()||0;
+
+                                            Ex.flag.NickNameCount = r;
+
+                                            if(r>=Ex.config.max)
+                                            {
+                                                alert(Ex.config.msg.day_limit(nick_name));
+
+                                                Ex.func.PlurkList();
+
+
+                                                return;
+                                            }
+
+                                            Ex.func.DB(`PlurkSearch/XmlCount/${Ex.flag.PlurkDay}`,`add`,(r)=>{
+
+                                                r = r.val()||0;
+                
+                                                if(r>=Ex.config.XMLmax)
+                                                {
+                                                    alert(Ex.config.msg.xml);
+                                                    Ex.func.PlurkList();
+                
+                                                    
+                                                    return;
+                                                }
+                                                
+                
+                                                api.Send();
+                
+                                            });
+                
+                                        });                               
+                            
+                                    },Ex.config.loop_sec);
+                                }
+                                else
+                                {
+                                    Ex.func.PlurkList();
+                                    
+                                    document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
+                                    document.querySelector(`[data-mode="GetFans"]`).removeAttribute("disabled");
+                                }    
+                            }
+
+
+                            
+
+                            Ex.func.DB(`PlurkSearch/nick_name/${nick_name}/${Ex.flag.PlurkDay}/search_count`,`add`,(r)=>{
+
+                                r = r.val()||0;
+
+                                Ex.flag.NickNameCount = r;
+
+                                if(r>=Ex.config.max)
+                                {
+                                    alert(Ex.config.msg.day_limit(nick_name));
+                                    Ex.func.PlurkList();
+
+                                    document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
+                                    return;
+                                }
+
+                                Ex.func.DB(`PlurkSearch/SearchCount/${Ex.flag.PlurkDay}`,`add`);
+
+                                Ex.func.DB(`PlurkSearch/XmlCount/${Ex.flag.PlurkDay}`,`add`,(r)=>{
+
+                                    r = r.val()||0;
+
+                                    if(r>=Ex.config.XMLmax)
+                                    {
+                                        alert(Ex.config.msg.xml);
+                                        Ex.func.PlurkList();
+
+                                        document.querySelector(`[data-mode="Search"]`).removeAttribute("disabled");
+                                        return;
+                                    }
+
+
+                                    api.Send();
+
+                                });
+
+                            });
+                                
+
+
+                        });
+                    break;
+
+
+
+                    case "sort_desc":
+
+                        Ex.flag.sort_desc = !Ex.flag.sort_desc;
+                        Ex.func.FanList();
+
+                    break;
 
                     case "TextPrint":
 
@@ -564,36 +1108,8 @@
 
                     case "PageChange":
 
-                        var path = e.target.dataset.path;
-                        var total = Ex.PlurkApi.search_plurks.length;
-                        var now_page = parseInt(Ex.flag.page);
-
-                        if(path==="next")
-                        {
-                            Ex.flag.page = now_page + 1;
-                        }
-                        else if(path==="prev")
-                        {
-                            Ex.flag.page = now_page - 1;
-                        }
-
-
-                        if(
-                            Ex.flag.page>Math.ceil(total/Ex.config.page_per_count) || 
-                            Ex.flag.page*Ex.config.page_per_count<=0) return;
-
-
-                        document.querySelector("#PageBar #page").value = Ex.flag.page;
-                        document.querySelector("#PlurkList").scrollTo(0,0);
-
-
-                        Ex.func.PlurkList( Ex.PlurkApi.plurks );
-
-                        Ex.func.PageControl();
-
-
-
-
+                        Ex.func.PageChange(e.target.dataset.path);
+                        
                     break;
 
                 }
@@ -618,8 +1134,30 @@
                         });
 
                     break;
+
+
+
                 }
                 
+
+            },
+            JsonChild:(obj,row)=>{
+
+                var _obj = JSON.parse(JSON.stringify(obj));
+                row = row.split(".");
+
+                row.forEach(_row=>{
+
+                    if(_obj===undefined) return;
+
+                    if(_obj[_row]!==undefined)
+                        _obj = _obj[_row];
+                    else
+                        _obj = undefined;
+
+                });
+
+                return _obj;
 
             },
             StorageUpd:()=>{
@@ -735,6 +1273,8 @@
 
             <input data-event="ClickEvent" data-mode="Search" id="Search" type="button" value="搜尋">
 
+            <input data-event="ClickEvent" data-mode="GetFans" id="GetFans" type="button" value="粉絲清單">
+
             <!--
             <input data-event="ClickEvent" data-mode="TextPrint" id="TextPrint" type="button" value="快速顯示">
             -->
@@ -752,7 +1292,14 @@
             data-path="prev" disabled
             type="button" value="上一頁">
 
-            <input id="page" type="button" value="1">
+            <!--<input id="page" type="button" value="1">-->
+
+            <div id="page">
+                <select id="PageChange" data-mode="PageChange" data-event="ChangeEvent">
+                    <option>1</option>
+                </select>
+            </div>
+
 
             <input id="next" 
             data-event="ClickEvent" 

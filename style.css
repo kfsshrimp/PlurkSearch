@@ -61,3 +61,28 @@ div#Progress{
     border-radius: 5px;
     color: #000;
 }
+
+
+div#PageBar *{
+    display: inline-flex;
+    margin: 2px;
+    padding: 2px;
+}
+
+
+table#FanListTable{
+    background: #fff;
+    color: #000;
+    padding: 10px;
+    margin: 4px;
+    border-radius: 5px;
+}
+table#FanListTable td{
+    border: 1px solid #000;
+    padding: 4px;
+}
+
+table#FanListTable td.SortNow{
+    background: #0f0;
+    color: #f00;
+}
