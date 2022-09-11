@@ -1244,7 +1244,7 @@
 
             
 
-            Ex.firebase("https://kfs-plurk-default-rtdb.firebaseio.com/");
+            Ex.firebase("https://plurksearch-9f77d-default-rtdb.firebaseio.com/");
 
 
             Ex.js(
