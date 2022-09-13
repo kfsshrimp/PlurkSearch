@@ -1,5 +1,5 @@
 (()=>{
-    var Ex = {
+    Ex = {
         id:"PlurkSearch",
         config:{
             sort:{
@@ -42,8 +42,8 @@
                 Progress:(number,day)=>{
                     return `搜尋中：${number}%(${day})`;
                 },
-                search_fans_end:(detail_count)=>{
-                    return `共有 ${Ex.PlurkApi.fans.length} 粉絲, ${detail_count} 名已讀取完畢`
+                search_fans_end:(mode,detail_count)=>{
+                    return `共有 ${Ex.PlurkApi[mode].length} ${(mode.indexOf("Fans")!==-1)?`粉絲`:`好友`}, ${detail_count} 名已讀取完畢`
                 },
                 nick_name_err:`帳號輸入有誤`,
                 xml:`系統今日已達查詢上限,請明日再查詢`,
@@ -57,6 +57,7 @@
                 total:0,
                 page:1
             },
+            search_mode:"",
             fans_sort:"karma",
             sort_desc:true,
             page:1,
@@ -304,17 +305,17 @@
                 document.querySelector("#PlurkList").scrollTo(0,0);
 
 
-                (Ex.flag.PageControl.mode==="plurks")?Ex.func.PlurkList():Ex.func.FanList();
+                (Ex.flag.PageControl.mode==="plurks")?Ex.func.PlurkList():Ex.func.FanList(Ex.flag.search_mode);
 
 
             },
-            PageControl:( mode = "plurks" )=>{
+            PageControl:( mode = "search_plurks" )=>{
 
-                var total = Ex.PlurkApi[`search_${mode}`].length;
+                var total = Ex.PlurkApi[`${mode}`].length;
                 
                 Ex.flag.PageControl = {
                     mode:mode,
-                    total:Ex.PlurkApi[`search_${mode}`].length,
+                    total:Ex.PlurkApi[`${mode}`].length,
                     page:Ex.flag.PageControl.page
                 };
 
@@ -472,9 +473,9 @@
                 
 
             },
-            FanList:()=>{
+            FanList:(mode)=>{
 
-                var fans = Ex.PlurkApi.fans;
+                var fans = Ex.PlurkApi[mode];
 
                 Ex.flag.ClickEventRegister = [];
                 Ex.flag.ChangeEventRegister = [];
@@ -504,7 +505,7 @@
                 
 
 
-                Ex.PlurkApi.search_fans = search_fans;
+                Ex.PlurkApi[mode] = search_fans;
 
                 document.querySelector("#PlurkList").appendChild(Ex.temp.FanSort());
 
@@ -542,7 +543,7 @@
                 document.querySelectorAll(`td[data-sort="${Ex.flag.fans_sort}"]`).forEach(o=>{o.className = "SortNow";});
                 
 
-                Ex.func.PageControl('fans');
+                Ex.func.PageControl(mode);
 
 
             },
@@ -643,7 +644,7 @@
                         Ex.flag.fans_sort = e.target.value;
 
 
-                        Ex.func.FanList();
+                        Ex.func.FanList(Ex.flag.search_mode);
 
                     break;
 
@@ -681,26 +682,29 @@
             },
             FansDetail:(fans,i)=>{
 
+                var mode = Ex.flag.search_mode;
+                
 
                 if(fans[i]===undefined)
                 {
 
-                    Ex.DB.ref(`PlurkSearch/nick_name/${document.querySelector("#nick_name").value}/${Ex.flag.PlurkDay}/search_fans`).set(Ex.PlurkApi.fans);
+                    Ex.DB.ref(`PlurkSearch/nick_name/${document.querySelector("#nick_name").value}/${Ex.flag.PlurkDay}/${mode}`).set(Ex.PlurkApi[mode]);
 
 
-                    Ex.func.FanList();
+                    Ex.func.FanList(mode);
                     console.log(`【Get End】`);
                     return;
                 }
 
+             
                 if(fans[i].karma<Ex.config.karma_limit)
                 {
                     setTimeout(()=>{
 
                         i++;
-                        document.querySelector("#Progress").innerHTML = Ex.config.msg.search_fans_end(i);
+                        document.querySelector("#Progress").innerHTML = Ex.config.msg.search_fans_end(mode,i);
 
-                        document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 ${i/Ex.PlurkApi.fans.length*100}% , #999 0%)`;
+                        document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 ${i/Ex.PlurkApi[mode].length*100}% , #999 0%)`;
 
 
                         Ex.func.FansDetail(fans,i);
@@ -720,9 +724,9 @@
 
                     i++;
 
-                    document.querySelector("#Progress").innerHTML = Ex.config.msg.search_fans_end(i);
+                    document.querySelector("#Progress").innerHTML = Ex.config.msg.search_fans_end(mode,i);
 
-                    document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 ${i/Ex.PlurkApi.fans.length*100}% , #999 0%)`;
+                    document.querySelector("#Progress").style.background = `linear-gradient(to right, #0d0 ${i/Ex.PlurkApi[mode].length*100}% , #999 0%)`;
                     
                     
                     if(fans[i]!==undefined)
@@ -737,10 +741,10 @@
                     else
                     {
 
-                        Ex.DB.ref(`PlurkSearch/nick_name/${document.querySelector("#nick_name").value}/${Ex.flag.PlurkDay}/search_fans`).set(Ex.PlurkApi.fans);
+                        Ex.DB.ref(`PlurkSearch/nick_name/${document.querySelector("#nick_name").value}/${Ex.flag.PlurkDay}/${mode}`).set(Ex.PlurkApi[mode]);
 
 
-                        Ex.func.FanList();
+                        Ex.func.FanList(mode);
                         console.log(`【Get End】`);
                     }
                     
@@ -748,21 +752,21 @@
 
 
             },
-            GetFuns:()=>{
+            GetFuns:(mode)=>{
 
                 Ex.func.UsersDetail( document.querySelector("#nick_name").value,{include_plurks:"false"},(user)=>{
 
                     var api = Ex.PlurkApi;
 
-                    
-                    
-                    api.act = "FriendsFans/getFansByOffset";
+                  
+                    api.act = (mode.indexOf("Fans")!==-1)?"FriendsFans/getFansByOffset":"FriendsFans/getFriendsByOffset"
+
                     api.arg.user_id = user.user_info.id;
                     api.arg.offset = "0";
                     api.arg.limit = "100";
                     api.func = (r)=>{
                     
-                        api.fans = api.fans||[];
+                        api[mode] = api[mode]||[];
     
                         try{
                             r = JSON.parse(r.response);
@@ -773,24 +777,27 @@
                             return;
                         }
     
-                        api.fans = api.fans.concat(r);
+                        api[mode] = api[mode].concat(r);
+
+                        
+
     
                         
                         if(r.length===0)
                         {
-                            document.querySelector("#Progress").innerHTML = Ex.config.msg.search_fans_end(0);
+                            document.querySelector("#Progress").innerHTML = Ex.config.msg.search_fans_end(mode,0);
 
-                            if(api.fans.length>Ex.config.fans_cfg.fans_count_max)
+                            if(api[mode].length>Ex.config.fans_cfg.fans_count_max)
                             {
-                                if(confirm(`粉絲數過多，第一次讀取需要較長時間，確定要繼續嗎？`)===false){
+                                if(confirm(`粉絲或好友數過多，第一次讀取需要較長時間，確定要繼續嗎？`)===false){
 
-                                    Ex.func.DisabledBtn([`[data-mode="GetFans"]`,`[data-mode="Search"]`],false);
+                                    Ex.func.DisabledBtn([`[data-mode="GetFans"]`,`[data-mode="Search"]`,`[data-mode="GetFriends"]`],false);
                                     return;
                                 }
                             }
 
 
-                            Ex.func.FansDetail(api.fans,0);
+                            Ex.func.FansDetail(api[mode],0);
     
                             return;
                         }
@@ -837,15 +844,19 @@
                 switch (e.target.dataset.mode){
 
 
+                    case "GetFriends":
                     case "GetFans":
 
-                        Ex.func.DisabledBtn([`[data-mode="GetFans"]`,`[data-mode="Search"]`],true);
+                        var mode = e.target.dataset.mode;
+                        Ex.flag.search_mode = mode;
+
+                        Ex.func.DisabledBtn([`[data-mode="GetFans"]`,`[data-mode="Search"]`,`[data-mode="GetFriends"]`],true);
 
                         Ex.func.PlurkTime(()=>{
 
                             Ex.DB.ref(`PlurkSearch/nick_name/${document.querySelector("#nick_name").value}`).once("value",r=>{
 
-                                r = r.val();
+                                r = r.val()||{};
 
                                 r[Ex.flag.PlurkDay] = r[Ex.flag.PlurkDay]||{};
                                 
@@ -855,18 +866,19 @@
                                 {
                                     if(day===Ex.flag.PlurkDay) continue;
 
-                                    r[day].search_fans = 1;
+                                    //r[day].search_fans = 1;
+                                    r[day][mode] = 1;
                                 }
                                 
 
-                                if(r[Ex.flag.PlurkDay].search_fans!==undefined)
+                                if(r[Ex.flag.PlurkDay][mode]!==undefined)
                                 {
-                                    Ex.PlurkApi.fans = r[Ex.flag.PlurkDay].search_fans;
-                                    Ex.func.FanList();
+                                    Ex.PlurkApi[mode] = r[Ex.flag.PlurkDay][mode];
+                                    Ex.func.FanList(mode);
                                 }
                                 else
                                 {
-                                    Ex.func.GetFuns();
+                                    Ex.func.GetFuns(mode);
                                 }
 
                                 Ex.DB.ref(`PlurkSearch/nick_name/${document.querySelector("#nick_name").value}`).set(r);
@@ -1098,7 +1110,7 @@
                     case "sort_desc":
 
                         Ex.flag.sort_desc = !Ex.flag.sort_desc;
-                        Ex.func.FanList();
+                        Ex.func.FanList(Ex.flag.search_mode);
 
                     break;
 
@@ -1286,6 +1298,8 @@
             <input data-event="ClickEvent" data-mode="Search" id="Search" type="button" value="搜尋">
 
             <input data-event="ClickEvent" data-mode="GetFans" id="GetFans" type="button" value="粉絲清單">
+
+            <input data-event="ClickEvent" data-mode="GetFriends" id="GetFriends" type="button" value="好友清單">
 
             <!--
             <input data-event="ClickEvent" data-mode="TextPrint" id="TextPrint" type="button" value="快速顯示">
